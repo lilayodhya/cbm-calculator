@@ -1,0 +1,210 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ══════════════════════════════════════════════════════════
+   Global Styles (migrated from index.html <style> block)
+   ══════════════════════════════════════════════════════════ */
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ── Global smooth theme transition ── */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-duration: 180ms;
+  transition-timing-function: ease-in-out;
+}
+
+/* Slow transition only for theme toggle (intentional) */
+.theme-slow-transition {
+  transition-duration: 500ms !important;
+}
+
+/* Exclude animation/transform properties from the global transition */
+.no-theme-transition {
+  transition: none !important;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #f8fafc;
+  color: #334155;
+  min-height: 100vh;
+}
+
+.dark body,
+body.dark {
+  background: #0f172a;
+  color: #cbd5e1;
+}
+
+/* ── Custom scrollbar (light) ── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* ── Glassmorphic card ── */
+.glass {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.dark .glass {
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid rgba(99, 102, 241, 0.12);
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* ── Shimmer header text ── */
+@keyframes shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.shimmer-text {
+  background: linear-gradient(135deg, #4f46e5, #6366f1, #8b5cf6, #06b6d4, #4f46e5);
+  background-size: 400% 400%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s ease-in-out infinite;
+}
+
+/* ── Fade-in card animation ── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── Glow pulse on totals — clearly visible breathing glow ── */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0),
+                0 2px 8px rgba(0,0,0,0.06);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12),
+                0 0 24px rgba(99, 102, 241, 0.35),
+                0 2px 8px rgba(0,0,0,0.06);
+  }
+}
+
+.pulse-glow {
+  animation: pulseGlow 2.8s ease-in-out infinite;
+}
+
+/* ── Spinner ── */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  animation: spin 0.7s linear infinite;
+  transition: none !important;
+}
+
+/* ── Hide number input spinners ── */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+/* ── Theme toggle pill ── */
+.theme-pill {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 500ms ease-in-out !important;
+}
+
+/* ── Ambient orbs — slow drift so the background feels alive ── */
+@keyframes orbDrift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(30px, -20px) scale(1.06); }
+  66%       { transform: translate(-18px, 16px) scale(0.96); }
+}
+
+.orb {
+  pointer-events: none;
+  border-radius: 9999px;
+  position: fixed;
+  filter: blur(80px);
+  transition: none !important;
+  animation: orbDrift 18s ease-in-out infinite;
+}
+
+.orb:nth-child(2) { animation-delay: -6s; animation-duration: 22s; }
+.orb:nth-child(3) { animation-delay: -12s; animation-duration: 26s; }
+
+/* ── Progress bar fill animation ── */
+.bar-fill {
+  transition: width 0.7s cubic-bezier(0.25, 1, 0.5, 1) !important;
+}
+
+/* ── Flash highlight — plays on newly added shipment rows ── */
+@keyframes flashHighlight {
+  0%   { box-shadow: 0 0 0 0 rgba(99,102,241,0.7); background-color: rgba(99,102,241,0.12); }
+  60%  { box-shadow: 0 0 0 8px rgba(99,102,241,0); }
+  100% { box-shadow: 0 0 0 0 rgba(99,102,241,0); background-color: transparent; }
+}
+
+.flash-new {
+  animation: flashHighlight 0.9s ease-out forwards;
+}
