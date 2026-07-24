@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=20.12.0"
+  },
   "scripts": {
     "dev": "vite",
     "start": "node backend/server.cjs",
@@ -21,7 +24,7 @@
     "papaparse": "^5.5.3",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "xlsx": "^0.18.5"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

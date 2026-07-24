@@ -63,7 +63,7 @@ const Header = ({ mode, setTheme }) => (
         </motion.div>
         <div className="min-w-0">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold shimmer-text tracking-tight truncate">
-            CargoIQ
+            CBM ALS
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-0.5 hidden sm:block">
             Shipping volume &amp; weight management dashboard

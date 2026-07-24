@@ -29,15 +29,27 @@ export function useShipment() {
 
   useEffect(() => {
     setProductsLoading(true);
-    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    // Production requests stay same-origin and are authenticated by IIS.
+    // Set VITE_API_URL only for local development without the IIS proxy.
+    const API_BASE = import.meta.env.VITE_API_URL || '.';
     fetch(`${API_BASE}/api/products`)
-      .then(res => res.json())
+      .then(async (res) => {
+        if (!res.ok) {
+          throw new Error(`Product API request failed (${res.status})`);
+        }
+        const data = await res.json();
+        if (!Array.isArray(data)) {
+          throw new Error('Product API returned an invalid response.');
+        }
+        return data;
+      })
       .then(data => {
         setProducts(data);
         setProductsLoading(false);
       })
-      .catch(err => {
-        setProductsError('Failed to load products from database.');
+      .catch(() => {
+        setProducts([]);
+        setProductsError('Unable to load products from the database. Please contact IT.');
         setProductsLoading(false);
       });
   }, []);

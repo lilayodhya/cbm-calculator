@@ -270,10 +270,10 @@ const ActiveShipment = ({
 
                     {/* Responsive Mobile Layout for Stats & Controls */}
                     <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700/50">
-                      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
+                      <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end sm:gap-4">
 
                         {/* Stats flex container - Allows items to layout cleanly based on content sizes */}
-                        <div className="flex flex-row justify-between sm:justify-start gap-x-4 sm:gap-x-8 sm:gap-y-2 w-full sm:w-auto">
+                        <div className="flex flex-row flex-wrap justify-between sm:justify-start gap-x-4 sm:gap-x-8 gap-y-2 w-full min-w-0">
                           <div className="text-center sm:text-left flex-shrink-0">
                             <p className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-0.5 whitespace-nowrap">CBM/ship</p>
                             <p className="text-[11px] sm:text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 truncate">
@@ -303,8 +303,8 @@ const ActiveShipment = ({
                         </div>
 
                         {/* Qty Controls - Drops below stats on mobile, aligns right */}
-                        <div className="flex items-center justify-end w-full sm:w-auto mt-1 sm:mt-0">
-                          <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center justify-end w-full sm:w-auto shrink-0 sm:justify-self-end">
+                          <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-200 dark:border-slate-700 max-w-full">
                             <button id={`qty-dec-${idx}`} onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
                               className="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 shadow-sm border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600 flex items-center justify-center text-base font-bold">−</button>
                             <input id={`qty-input-${idx}`} type="number" min="1" value={item.quantity}

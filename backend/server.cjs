@@ -2,19 +2,100 @@ const express = require('express');
 const cors = require('cors');
 const sql = require('mssql');
 const crypto = require('crypto');
+const fs = require('node:fs');
+const path = require('node:path');
+
+// Load local development secrets from .env. On the office server, prefer
+// setting these variables in the service account or secret manager instead.
+const envFile = path.resolve(__dirname, '..', '.env');
+if (fs.existsSync(envFile)) process.loadEnvFile(envFile);
+
+const requiredEnv = (name) => {
+  const value = process.env[name];
+  if (!value) throw new Error(`Missing required environment variable: ${name}`);
+  return value;
+};
+
+const decryptSecret = (encryptedPayload, passphrase) => {
+  const [ivHex, payloadHex] = encryptedPayload.split(':');
+  if (!ivHex || !payloadHex) {
+    throw new Error('Encrypted secret payload is invalid.');
+  }
+
+  const iv = Buffer.from(ivHex, 'hex');
+  const encryptedBuffer = Buffer.from(payloadHex, 'hex');
+  const key = crypto.scryptSync(passphrase, 'cbm-als-db-password-salt', 32);
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+
+  const tagLength = 16;
+  const ciphertext = encryptedBuffer.subarray(0, encryptedBuffer.length - tagLength);
+  const tag = encryptedBuffer.subarray(encryptedBuffer.length - tagLength);
+  decipher.setAuthTag(tag);
+
+  return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString('utf8');
+};
+
+const getDbPassword = () => {
+  const encryptedPassword = process.env.DB_PASSWORD_ENCRYPTED?.trim();
+  const passphrase = process.env.DB_PASSWORD_PASSPHRASE?.trim();
+
+  if (encryptedPassword && passphrase) {
+    try {
+      return decryptSecret(encryptedPassword, passphrase);
+    } catch (error) {
+      console.error('Failed to decrypt DB_PASSWORD_ENCRYPTED:', error);
+      throw error;
+    }
+  }
+
+  return requiredEnv('DB_PASSWORD');
+};
 
 const app = express();
-app.use(cors());
+const allowedFrontendOrigins = requiredEnv('FRONTEND_ORIGIN')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Requests without an Origin header receive no CORS permission. This
+      // supports non-browser health checks without exposing the API to sites.
+      callback(null, Boolean(origin && allowedFrontendOrigins.includes(origin)));
+    },
+    methods: ['GET'],
+    maxAge: 86400,
+  })
+);
 app.use(express.json());
 
 // ─── DATABASE CONFIGURATION ────────────────────────────────────────────
 const DB_CONFIG = {
-  SERVER: '115.124.124.5',           // e.g. '192.168.1.10' or 'DESKTOP-XYZ\\SQLEXPRESS'
-  PORT: 4059,           // port goes here as a number
-  DATABASE: 'TEMP_BI',         // e.g. 'CompanyDB'
-  USERNAME: 'reader',         // e.g. 'sa'
-  PASSWORD: 'ALSreader@2026',         // e.g. 'yourpassword'
+  SERVER: requiredEnv('DB_SERVER'),
+  PORT: Number(process.env.DB_PORT || 1433),
+  DATABASE: requiredEnv('DB_DATABASE'),
+  USERNAME: requiredEnv('DB_USERNAME'),
+  PASSWORD: getDbPassword(),
 };
+
+// Supply the PEM-encoded issuing CA certificate when SQL Server uses an
+// internal PKI that is not already trusted by Node.js.
+const dbCaCertificatePath = process.env.DB_CA_CERT_PATH?.trim();
+const dbCaCertificate = dbCaCertificatePath
+  ? fs.readFileSync(dbCaCertificatePath, 'utf8')
+  : undefined;
+const dbTrustServerCertificate =
+  process.env.DB_TRUST_SERVER_CERTIFICATE?.trim().toLowerCase();
+const shouldTrustServerCertificate = dbCaCertificate
+  ? dbTrustServerCertificate === 'true'
+  : dbTrustServerCertificate !== 'false';
+
+if (!dbCaCertificate && shouldTrustServerCertificate) {
+  console.warn(
+    'DB_CA_CERT_PATH is not configured or the file is missing; falling back to trustServerCertificate for SQL connectivity.'
+  );
+}
 
 // ─── TABLE & COLUMN MAPPING ────────────────────────────────────────────
 const TABLE_CONFIG = {
@@ -40,8 +121,14 @@ const sqlConfig = {
   port: DB_CONFIG.PORT,
   database: DB_CONFIG.DATABASE,
   options: {
-    encrypt: false,
-    trustServerCertificate: true,
+    // Require TLS and validate the SQL Server certificate. DB_SERVER must
+    // match the certificate's DNS name and the issuing CA must be trusted by
+    // the office server running this application.
+    encrypt: true,
+    trustServerCertificate: shouldTrustServerCertificate,
+    ...(dbCaCertificate && {
+      cryptoCredentialsDetails: { ca: dbCaCertificate },
+    }),
   },
 };
 
@@ -104,11 +191,11 @@ app.get('/api/products', async (req, res) => {
     res.json(products);
   } catch (err) {
     console.error('Database error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Unable to load products.' });
   }
 });
 
-const PORT = 3001;
+const PORT = Number(process.env.PORT || 3001);
 app.listen(PORT, () => {
-  console.log(`Backend server running on http://localhost:${PORT}`);
+  console.log(`Backend server running on port ${PORT}`);
 });
